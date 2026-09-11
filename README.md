@@ -15,6 +15,8 @@ Four layers, not one coin:
 
 USDT in does not un-decentralize Kaspa. It imports a king into the money people use. The till labels that. If USDT were the fee asset, miners would sit under a freeze-capable issuer. Refused.
 
+“Sequenced on Kaspa” is the related sub-series of **this invoice** (create → pay → settle, no double-spend). It is not a global DeFi mutex. Sutton’s working hypothesis ([11 Sep 2026](https://x.com/michaelsuttonil/status/2098204180406026482)): reality updates in parallel; force partitioned app state, do not force the base into shared state. Two tills do not contend. A single USDT/kUSD pool everyone spends would.
+
 ```
 git clone https://github.com/STP-KAS/ishum.git
 cd ishum
