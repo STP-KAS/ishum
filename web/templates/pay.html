@@ -1,0 +1,76 @@
+{{template "header" .}}
+<section class="checkout">
+  <div class="bill">
+    <div class="kicker">Invoice {{.Invoice.ID}}</div>
+    <div class="display">{{printf "%.2f" .Invoice.Amount}} <small>{{.Invoice.Currency}}</small></div>
+    <p>{{.Invoice.ItemDesc}} · expires {{.Invoice.Expires.UTC.Format "15:04 UTC"}}</p>
+    <p class="status st-{{.Invoice.Status}}">{{.Invoice.Status}}{{if .Invoice.Confirmations}} · {{.Invoice.Confirmations}}/{{.Invoice.RequiredConf}} conf{{end}}</p>
+    <dl class="layers">
+      <dt>Quote</dt><dd>{{printf "%.2f" .Invoice.Amount}} {{.Invoice.Currency}} — unit of account, not the chain</dd>
+      <dt>Sequence</dt><dd>Kaspa L1 — GHOSTDAG. Tether does not vote.</dd>
+      <dt>Miner fee</dt><dd>~{{.Invoice.FeeText}} — always KAS, sender pays, even on a dollar rail</dd>
+      <dt>Settle</dt><dd>{{if .Chosen}}{{.Chosen.DueText}} · {{.Chosen.Badge}}{{else}}pick a rail{{end}}</dd>
+    </dl>
+  </div>
+
+  {{if .Error}}<p class="err">{{.Error}}</p>{{end}}
+
+  <div class="rails">
+    {{range .Invoice.Methods}}
+    <a class="rail {{if and $.Chosen (eq $.Chosen.Rail .Rail)}}on{{end}} {{if .Guest}}guest{{end}}" href="/pay/{{$.Invoice.ID}}?rail={{.Rail}}">
+      <strong>{{.Name}}</strong>
+      <span>{{.DueText}}</span>
+      <em>{{.Badge}}</em>
+    </a>
+    {{end}}
+  </div>
+
+  {{if .Chosen}}
+  <div class="paybox">
+    {{if .Chosen.URI}}
+    <img class="qr" src="/qr/{{.Invoice.ID}}.png?rail={{.Chosen.Rail}}" alt="payment QR">
+    <a class="uri" href="{{.Chosen.URI}}">{{.Chosen.URI}}</a>
+    {{else}}
+    <p class="due">{{.Chosen.DueText}}</p>
+    {{end}}
+    <p class="note">{{.Chosen.Note}}</p>
+    {{if .Chosen.Freeze}}
+    <p class="warn">Guest IOU. {{.Chosen.Issuer}} can freeze the address. Kaspa still sequences the tx. The money is not Kaspa’s.</p>
+    {{end}}
+    {{if not .Chosen.Live}}
+    <p class="note">No issued asset on this process. Checkout is real. Settlement here is a demonstration.</p>
+    {{end}}
+    {{if and (eq .Chosen.Rail "kas") (not $.Store.PayTo)}}
+    <p class="warn">No receive address. Set one under Store.</p>
+    {{end}}
+
+    <div class="actions">
+      {{if .Chosen.URI}}
+      <button type="button" id="kasware" class="ghost">Pay in Kasware / Kastle</button>
+      {{end}}
+      <form method="post" action="/pay/{{.Invoice.ID}}" class="claim">
+        <input type="hidden" name="rail" value="{{.Chosen.Rail}}">
+        <input name="txid" placeholder="paste txid" spellcheck="false" autocomplete="off">
+        <button type="submit">Claim</button>
+      </form>
+      {{if or (not .Chosen.Live) $.Demo}}
+      <form method="post" action="/pay/{{.Invoice.ID}}">
+        <input type="hidden" name="rail" value="{{.Chosen.Rail}}">
+        <input type="hidden" name="demo" value="1">
+        <button type="submit" class="ghost">Mark settled (demo)</button>
+      </form>
+      {{end}}
+    </div>
+  </div>
+  {{end}}
+</section>
+<script>
+window.ISHUM = {
+  id: {{printf "%q" .Invoice.ID}},
+  uri: {{if .Chosen}}{{printf "%q" .Chosen.URI}}{{else}}""{{end}},
+  sompi: {{if and .Chosen .Chosen.DueSompi}}{{.Chosen.DueSompi}}{{else}}0{{end}},
+  status: {{printf "%q" .Invoice.Status}}
+};
+</script>
+<script src="/static/js/pay.js"></script>
+{{template "footer" .}}

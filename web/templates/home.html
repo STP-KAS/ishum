@@ -1,0 +1,34 @@
+{{template "header" .}}
+<article class="facts">
+  <h1>Ishum</h1>
+  <p class="lead">A self-hosted till. It quotes a stable unit, sequences the payment on Kaspa, and settles in whatever rail you enable. Those are three different objects. Mixing them is how this stays stupid.</p>
+
+  <h2>Split or you design garbage</h2>
+  <table>
+    <thead><tr><th>Layer</th><th>Stable?</th><th>Decentralized?</th><th>Here</th></tr></thead>
+    <tbody>
+      <tr><td>Consensus / block order</td><td>no</td><td>yes — this is Kaspa</td><td>GHOSTDAG. USDT does not vote.</td></tr>
+      <tr><td>Miner fee / security budget</td><td>no</td><td>must stay native</td><td>Always KAS. Sender pays. Even if the bill is in dollars.</td></tr>
+      <tr><td>Unit of account</td><td>yes</td><td>optional</td><td>EUR or USD on the keypad. Not KAS. A restaurant tab cannot be sat-volatility.</td></tr>
+      <tr><td>Settlement asset</td><td>nice</td><td>if USDT, it can freeze</td><td>KAS (live) · kUSD (reserved, needs capital) · USDT (guest IOU)</td></tr>
+    </tbody>
+  </table>
+  <p>Slogan is the sequencer, not the money: <strong>sequenced on Kaspa</strong>. You do not need Tether to sequence on. You need a unit that does not jump 8% while the tx confirms. Those can be different objects.</p>
+
+  <h2>Settlement rails</h2>
+  <table>
+    <thead><tr><th>Settle in</th><th>Kind</th><th>Live</th><th>What you actually get</th></tr></thead>
+    <tbody>
+      <tr><td>KAS</td><td>native</td><td>yes</td><td>No issuer. Volatile. Watch-only to your address.</td></tr>
+      <tr><td>kUSD</td><td>reserved native-stable</td><td>no</td><td>A Kaspa dollar if someone posts reserves or collateral. Not Tether. No free dollar.</td></tr>
+      <tr><td>USDT</td><td>guest IOU</td><td>no</td><td>Tether prints, burns, freezes, answers to courts. Chain stays P2P. The <em>unit</em> is Tether policy. Not gas.</td></tr>
+    </tbody>
+  </table>
+  <p>USDT in does not delete Kaspa decentralization. It adds a centralized money on top. If that’s the product, the till says so. If USDT were gas, miners would be economically upstream of a freeze-capable issuer. That rail is refused: fee asset is KAS, full stop.</p>
+
+  <h2>What BTCPay already got right</h2>
+  <p>Self-hosted invoice engine. Watch-only. POS keypad + cart. Pay button. Webhook. Greenfield-shaped API. Lightning existed because Bitcoin L1 is too slow for a counter. Kaspa L1 is ~1s; default settle is 10 acceptances ≈ 10 seconds. A Kaspa BTCPay plugin is the documented altcoin path and is more work than this process. Mapping: <a href="https://docs.btcpayserver.org/Development/Altcoins/">Altcoins</a> → <code>plugin-btcpay/</code>.</p>
+
+  <p class="go"><a class="big" href="/pos">Open the till</a> <a href="/store">Set the receive address</a></p>
+</article>
+{{template "footer" .}}

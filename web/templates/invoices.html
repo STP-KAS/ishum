@@ -1,0 +1,21 @@
+{{template "header" .}}
+<section>
+  <h1>Invoices</h1>
+  <table class="wide">
+    <thead><tr><th>ID</th><th>Amount</th><th>Status</th><th>Rail</th><th>Created</th></tr></thead>
+    <tbody>
+    {{range .Invoices}}
+      <tr>
+        <td><a href="/pay/{{.ID}}">{{.ID}}</a></td>
+        <td>{{printf "%.2f" .Amount}} {{.Currency}}</td>
+        <td class="st-{{.Status}}">{{.Status}}</td>
+        <td>{{.Chosen}}</td>
+        <td>{{.Created.UTC.Format "15:04:05"}}</td>
+      </tr>
+    {{else}}
+      <tr><td colspan="5">None yet. Open the till.</td></tr>
+    {{end}}
+    </tbody>
+  </table>
+</section>
+{{template "footer" .}}

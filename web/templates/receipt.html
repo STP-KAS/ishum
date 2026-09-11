@@ -1,0 +1,22 @@
+{{template "header" .}}
+<section class="receipt">
+  <p class="kicker">Receipt</p>
+  <h1>{{printf "%.2f" .Invoice.Amount}} {{.Invoice.Currency}}</h1>
+  <p class="status st-{{.Invoice.Status}}">{{.Invoice.Status}}</p>
+  <dl>
+    <dt>Invoice</dt><dd>{{.Invoice.ID}}</dd>
+    <dt>Item</dt><dd>{{.Invoice.ItemDesc}}</dd>
+    <dt>Quote</dt><dd>{{printf "%.2f" .Invoice.Amount}} {{.Invoice.Currency}}</dd>
+    <dt>Sequence</dt><dd>Kaspa L1</dd>
+    <dt>Miner fee</dt><dd>~{{.Invoice.FeeText}} (KAS)</dd>
+    <dt>Settled</dt><dd>{{if .Chosen}}{{.Chosen.Name}} · {{.Chosen.DueText}} · {{.Chosen.Badge}}{{else}}—{{end}}</dd>
+    <dt>Tx</dt><dd class="mono">{{if .Invoice.TxID}}{{.Invoice.TxID}}{{else}}{{if .Invoice.Demo}}demo{{else}}—{{end}}{{end}}</dd>
+    <dt>Confirmations</dt><dd>{{.Invoice.Confirmations}} / {{.Invoice.RequiredConf}}</dd>
+    <dt>Paid</dt><dd>{{.Invoice.PaidAt}}</dd>
+  </dl>
+  {{if and .Chosen .Chosen.Freeze}}<p class="warn">Settled as a guest IOU. {{.Chosen.Issuer}} can freeze. Not native Kaspa money.</p>{{end}}
+  {{if .Invoice.Overpaid}}<p class="warn">Overpaid. Merchant keeps the extra unless they refund.</p>{{end}}
+  {{if .Invoice.Demo}}<p class="note">Demo settle. Not an L1 transfer of a stable.</p>{{end}}
+  <p><a href="/pos">Next sale</a></p>
+</section>
+{{template "footer" .}}

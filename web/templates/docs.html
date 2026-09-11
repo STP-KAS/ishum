@@ -1,0 +1,17 @@
+{{template "header" .}}
+<article class="facts">
+  <h1>API</h1>
+  <p>Greenfield-shaped. Header <code>Authorization: token {{.Store.APIKey}}</code>.</p>
+  <pre>POST /api/v1/invoices
+{"amount":2.5,"currency":"EUR","itemDesc":"Coffee","orderId":"42"}
+
+GET  /api/v1/invoices/{id}
+GET  /api/v1/invoices
+POST /api/v1/invoices/{id}/claim   {"txid":"…"}
+GET  /api/v1/rate
+GET  /api/v1/store</pre>
+  <p>Invoice statuses: New, Processing, Settled, Expired, Invalid. Webhook body is the invoice JSON. Header <code>X-Ishum-Event</code> is <code>InvoiceSettled</code> etc.</p>
+  <p>Every invoice carries <code>sequence: kaspa-l1</code>, <code>feeAsset: KAS</code>, <code>feeSompi</code>. Settlement methods carry <code>kind</code> (<code>native</code> / <code>reserved-native</code> / <code>guest-iou</code>) and <code>freeze</code> on USDT. Quote currency is not the fee asset.</p>
+  <p>Checkout poll does not need the token. Marking KAS settled without a tx requires <code>ISHUM_DEMO=1</code>.</p>
+</article>
+{{template "footer" .}}
