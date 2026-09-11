@@ -1,7 +1,6 @@
-ishum.exe
-ishum
+/ishum.exe
+/ishum
 data/
 video/clips/
 video/picture.mp4
 video/vo.wav
-*.exe
