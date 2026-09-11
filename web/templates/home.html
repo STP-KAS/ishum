@@ -17,7 +17,8 @@
 
   <h2>What “sequenced” means here</h2>
   <p><a href="https://x.com/michaelsuttonil/status/2098204180406026482">Sutton, 11 Sep 2026</a>: global DeFi is not sequential. The world updates in parallel. Relative order matters inside a <em>related</em> sub-series (a double-spend is the local case). It does not follow that every mutation must share a constant number of sequential bottlenecks. Apps should be pushed into partitioned state, not the base into shared state. If DeFi truly had to go through those bottlenecks, zk would not save it.</p>
-  <p>A till already is that partition. This invoice’s pay and the next shop’s pay do not share a mutex. L1 orders <em>this</em> payment against double-spend. It does not run the world’s books through one AMM. A global USDT/kUSD pool everyone spends would be the bottleneck he is warning about. Ishum does not have one. Quote lives on the merchant’s machine. Settlement is a UTXO (or a labeled guest IOU) to that merchant’s address.</p>
+  <p>A till already is that partition. Argent’s DEX does the same on-chain: Core is rarely touched; each pair has its own <code>quote_id</code>; swaps do not contend on Core. Ishum’s invoice <em>is</em> that quote. Watch fetches each merchant address once per tick, then binds a tx to at most one quote (payload / URI message first, unique sompi fallback). A second invoice cannot take that txid. A second shop is another address — it is not in this loop. A global USDT/kUSD pool everyone spends would be the bottleneck. Refused.</p>
+  <p>What this PoC cannot do: unique HD address per invoice (needs an xpub watcher, BTCPay’s trick). Payload match only works if the wallet copies the <code>kaspa:</code> message into the tx payload. Without that, unique sompi on one address is the fallback, and that address is still a local matching key — not a global DeFi mutex.</p>
 
   <h2>Settlement rails</h2>
   <table>
