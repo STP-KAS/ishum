@@ -1,0 +1,16 @@
+{{template "header" .}}
+<section>
+  <h1>Pay button</h1>
+  <p>Embed this form. It POSTs to Ishum, which creates an invoice and redirects to checkout. Same idea as BTCPay’s pay button.</p>
+  <pre>&lt;form method="post" action="http://{{.Host}}/pos/charge"&gt;
+  &lt;input type="hidden" name="amount" value="5.00"&gt;
+  &lt;input type="hidden" name="item" value="Donation"&gt;
+  &lt;button type="submit"&gt;Pay with Ishum&lt;/button&gt;
+&lt;/form&gt;</pre>
+  <form method="post" action="/pos/charge" class="demo-btn">
+    <input type="hidden" name="amount" value="5">
+    <input type="hidden" name="item" value="Donation">
+    <button type="submit">Pay 5.00 {{.Store.Currency}}</button>
+  </form>
+</section>
+{{template "footer" .}}

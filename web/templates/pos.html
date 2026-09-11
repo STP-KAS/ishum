@@ -1,0 +1,54 @@
+{{template "header" .}}
+<section class="till">
+  <div class="till-head">
+    <div>
+      <div class="kicker">{{.Store.Name}} · quoted in {{.Store.Currency}} · sequenced on Kaspa</div>
+      <div id="display" class="display">0.00 <small>{{.Store.Currency}}</small></div>
+    </div>
+    <div class="rate">
+      {{if .Book.KasUSD}}KAS ${{printf "%.4f" .Book.KasUSD}}{{else}}rate pending{{end}}
+      · {{.Store.RequiredConf}} conf
+    </div>
+  </div>
+  {{if .Error}}<p class="err">{{.Error}}</p>{{end}}
+  {{if not .Store.PayTo}}<p class="warn">Set a <a href="/store">kaspa: receive address</a> before taking KAS. Stables can still be demonstrated.</p>{{end}}
+
+  <div class="modes">
+    <button type="button" class="on" data-mode="keypad" id="mode-keypad">Keypad</button>
+    <button type="button" data-mode="cart" id="mode-cart">Cart</button>
+  </div>
+
+  <div id="keypad" class="pad">
+    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+    <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+    <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+    <button data-k="c" class="mute">C</button><button data-k="0">0</button><button data-k=".">.</button>
+  </div>
+
+  <div id="cart" class="cart hide">
+    {{range .Items}}
+    <button type="button" class="item" data-price="{{printf "%.2f" .Price}}" data-title="{{.Title}}">
+      <span>{{.Emoji}} {{.Title}}</span>
+      <strong>{{printf "%.2f" .Price}}</strong>
+    </button>
+    {{end}}
+    <ul id="lines"></ul>
+  </div>
+
+  <div class="tips">
+    <span>Tip</span>
+    <button type="button" data-tip="0" class="on">0%</button>
+    <button type="button" data-tip="10">10%</button>
+    <button type="button" data-tip="15">15%</button>
+    <button type="button" data-tip="20">20%</button>
+  </div>
+
+  <form id="charge" method="post" action="/pos/charge">
+    <input type="hidden" name="amount" id="amount" value="0">
+    <input type="hidden" name="tip" id="tip" value="0">
+    <input type="hidden" name="item" id="item" value="sale">
+    <button type="submit" class="charge" id="charge-btn" disabled>Charge 0.00 {{.Store.Currency}}</button>
+  </form>
+</section>
+<script src="/static/js/pos.js"></script>
+{{template "footer" .}}

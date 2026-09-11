@@ -1,0 +1,39 @@
+{{template "header" .}}
+<section class="form">
+  <h1>Store</h1>
+  {{if .Error}}<p class="err">{{.Error}}</p>{{end}}
+  <form method="post" action="/store">
+    <label>Name <input name="name" value="{{.Store.Name}}" required></label>
+    <label>Receive address
+      <input name="payTo" value="{{.Store.PayTo}}" placeholder="kaspa:q…" spellcheck="false" autocomplete="off">
+    </label>
+    <p class="note">Watch-only. Ishum never asks for a seed. Each KAS invoice uses this address plus a unique sompi amount.</p>
+    <label>Currency
+      <select name="currency">
+        <option value="EUR" {{if eq .Store.Currency "EUR"}}selected{{end}}>EUR</option>
+        <option value="USD" {{if eq .Store.Currency "USD"}}selected{{end}}>USD</option>
+      </select>
+    </label>
+    <label>Required confirmations
+      <input name="requiredConfirmations" type="number" min="1" max="200" value="{{.Store.RequiredConf}}">
+    </label>
+    <p class="note">1 ≈ one second (already in a block). 10 is the default. Bitcoin POS needed Lightning for this number.</p>
+    <label>Invoice expiry (minutes)
+      <input name="expiryMinutes" type="number" min="1" max="1440" value="{{.Store.ExpiryMinutes}}">
+    </label>
+    <label>KAS/USD override (blank = indexer)
+      <input name="kasUsd" value="{{if .Store.KasUSDOverride}}{{.Store.KasUSDOverride}}{{end}}" placeholder="{{if .Book.KasUSD}}{{printf "%.6f" .Book.KasUSD}}{{end}}">
+    </label>
+    <label>Webhook URL <input name="webhook" value="{{.Store.Webhook}}" placeholder="https://…"></label>
+    <p class="note">Currency above is the <strong>quote</strong> (unit of account). Settlement is separate. Miner fee is always KAS.</p>
+    <fieldset>
+      <legend>Settlement rails</legend>
+      <label class="check"><input type="checkbox" name="enableKas" value="1" {{if .Store.EnableKAS}}checked{{end}}> KAS — native. No issuer. Live.</label>
+      <label class="check"><input type="checkbox" name="enableKusd" value="1" {{if .Store.EnableKUSD}}checked{{end}}> kUSD — reserved native-stable. Needs capital. Not Tether. Not live.</label>
+      <label class="check"><input type="checkbox" name="enableUsdt" value="1" {{if .Store.EnableUSDT}}checked{{end}}> USDT — guest IOU. Tether can freeze. Not gas. I accept that.</label>
+    </fieldset>
+    <button type="submit">Save</button>
+  </form>
+  <p class="note">API token (Authorization: token …): <code>{{.Store.APIKey}}</code></p>
+</section>
+{{template "footer" .}}

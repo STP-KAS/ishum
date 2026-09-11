@@ -1,0 +1,31 @@
+{{define "header"}}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{if .Title}}{{.Title}} · {{end}}Ishum</title>
+<link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/">Ishum</a>
+  <span class="slogan">sequenced on Kaspa</span>
+  <nav>
+    <a href="/pos" {{if eq .Active "pos"}}class="on"{{end}}>POS</a>
+    <a href="/invoices" {{if eq .Active "invoices"}}class="on"{{end}}>Invoices</a>
+    <a href="/store" {{if eq .Active "store"}}class="on"{{end}}>Store</a>
+    <a href="/button" {{if eq .Active "button"}}class="on"{{end}}>Button</a>
+    <a href="/docs" {{if eq .Active "docs"}}class="on"{{end}}>API</a>
+  </nav>
+</header>
+<main>
+{{end}}
+{{define "footer"}}
+</main>
+<footer>
+  <span>Ishum is a self-hosted invoice engine. It does not hold keys.</span>
+  <span>{{.Store.Name}}</span>
+</footer>
+</body>
+</html>
+{{end}}
