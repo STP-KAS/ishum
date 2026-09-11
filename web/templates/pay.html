@@ -7,7 +7,7 @@
     <p class="status st-{{.Invoice.Status}}">{{.Invoice.Status}}{{if .Invoice.Confirmations}} · {{.Invoice.Confirmations}}/{{.Invoice.RequiredConf}} conf{{end}}</p>
     <dl class="layers">
       <dt>Quote</dt><dd>{{printf "%.2f" .Invoice.Amount}} {{.Invoice.Currency}} — unit of account, not the chain</dd>
-      <dt>Sequence</dt><dd>Kaspa L1 — GHOSTDAG. Tether does not vote.</dd>
+      <dt>Sequence</dt><dd>Kaspa L1, this invoice — not a global DeFi mutex. Tether does not vote.</dd>
       <dt>Miner fee</dt><dd>~{{.Invoice.FeeText}} — always KAS, sender pays, even on a dollar rail</dd>
       <dt>Settle</dt><dd>{{if .Chosen}}{{.Chosen.DueText}} · {{.Chosen.Badge}}{{else}}pick a rail{{end}}</dd>
     </dl>

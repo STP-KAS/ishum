@@ -15,6 +15,10 @@
   </table>
   <p>Slogan is the sequencer, not the money: <strong>sequenced on Kaspa</strong>. You do not need Tether to sequence on. You need a unit that does not jump 8% while the tx confirms. Those can be different objects.</p>
 
+  <h2>What “sequenced” means here</h2>
+  <p><a href="https://x.com/michaelsuttonil/status/2098204180406026482">Sutton, 11 Sep 2026</a>: global DeFi is not sequential. The world updates in parallel. Relative order matters inside a <em>related</em> sub-series (a double-spend is the local case). It does not follow that every mutation must share a constant number of sequential bottlenecks. Apps should be pushed into partitioned state, not the base into shared state. If DeFi truly had to go through those bottlenecks, zk would not save it.</p>
+  <p>A till already is that partition. This invoice’s pay and the next shop’s pay do not share a mutex. L1 orders <em>this</em> payment against double-spend. It does not run the world’s books through one AMM. A global USDT/kUSD pool everyone spends would be the bottleneck he is warning about. Ishum does not have one. Quote lives on the merchant’s machine. Settlement is a UTXO (or a labeled guest IOU) to that merchant’s address.</p>
+
   <h2>Settlement rails</h2>
   <table>
     <thead><tr><th>Settle in</th><th>Kind</th><th>Live</th><th>What you actually get</th></tr></thead>
