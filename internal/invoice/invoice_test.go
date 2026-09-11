@@ -95,10 +95,10 @@ func TestUnderpayInvalidAfterExpiry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	mu.Lock()
-	live.Invoices[0].Expires = time.Now().UTC().Add(-time.Second)
-	due := live.Invoices[0].Methods[0].DueSompi
-	mu.Unlock()
+	if err := SetExpires(inv.ID, time.Now().UTC().Add(-time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	due := MethodOf(*inv, "kas").DueSompi
 	got, err := Seen(inv.ID, "bb", due/2, 1)
 	if err != nil {
 		t.Fatal(err)
@@ -144,5 +144,43 @@ func TestDemoStable(t *testing.T) {
 	_, err = DemoSettle(inv2.ID, "kas", false)
 	if err == nil {
 		t.Fatal("live kas without ISHUM_DEMO")
+	}
+}
+
+func TestQuotePartition(t *testing.T) {
+	setup(t)
+	st := storecfg.Store{
+		ID: "S1", PayTo: "kaspa:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqkx9awp4e",
+		RequiredConf: 1, ExpiryMinutes: 15, EnableKAS: true,
+	}
+	a, err := Create(NewReq{Amount: 1, Currency: "USD", Store: st, Book: rate.Book{KasUSD: 0.05, EurUSD: 1}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := Create(NewReq{Amount: 1, Currency: "USD", Store: st, Book: rate.Book{KasUSD: 0.05, EurUSD: 1}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.QuoteID == "" || a.QuoteID != a.ID {
+		t.Fatal(a.QuoteID)
+	}
+	if a.ID == b.ID {
+		t.Fatal("same quote")
+	}
+	da := MethodOf(*a, "kas").DueSompi
+	txid := "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	if _, err := Seen(a.ID, txid, da, 10); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Seen(b.ID, txid, MethodOf(*b, "kas").DueSompi, 10); err == nil {
+		t.Fatal("txid must bind one quote")
+	}
+	got, _ := Get(a.ID)
+	if got.Status != Settled || got.Match != "amount" {
+		t.Fatal(got.Status, got.Match)
+	}
+	got, _ = Get(b.ID)
+	if got.Status != New {
+		t.Fatal("b must stay open")
 	}
 }

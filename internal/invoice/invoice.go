@@ -79,6 +79,8 @@ type Invoice struct {
 	FeeAsset      string    `json:"feeAsset"`
 	FeeSompi      uint64    `json:"feeSompi"`
 	FeeText       string    `json:"feeText"`
+	QuoteID       string    `json:"quoteId"`
+	Match         string    `json:"match,omitempty"`
 }
 
 type Event struct {
@@ -89,29 +91,63 @@ type Event struct {
 	TxID   string    `json:"txid,omitempty"`
 }
 
-type book struct {
-	Invoices []Invoice `json:"invoices"`
-	Events   []Event   `json:"events"`
+type index struct {
+	Open  []string          `json:"open"`
+	All   []string          `json:"all"`
+	Taken map[string]string `json:"taken"`
+	Events []Event          `json:"events"`
 }
 
 var (
 	mu   sync.Mutex
-	path string
-	live book
+	root string
+	idx  index
 	// Hook is called after a status change. Must not re-enter this package.
 	Hook func(*Invoice)
 )
 
 func Init(dir string) error {
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	root = dir
+	if err := os.MkdirAll(invDir(), 0o755); err != nil {
 		return err
 	}
-	path = filepath.Join(dir, "invoices.json")
-	b, err := os.ReadFile(path)
+	idx = index{Taken: map[string]string{}}
+	raw, err := os.ReadFile(idxPath())
 	if err == nil {
-		_ = json.Unmarshal(b, &live)
+		_ = json.Unmarshal(raw, &idx)
 	}
-	return nil
+	if idx.Taken == nil {
+		idx.Taken = map[string]string{}
+	}
+	legacy := filepath.Join(dir, "invoices.json")
+	if b, err := os.ReadFile(legacy); err == nil {
+		var old struct {
+			Invoices []Invoice `json:"invoices"`
+			Events   []Event   `json:"events"`
+		}
+		if json.Unmarshal(b, &old) == nil {
+			for _, inv := range old.Invoices {
+				_ = writeInv(inv)
+				idx.All = append(idx.All, inv.ID)
+				if inv.Status == New || inv.Status == Processing {
+					idx.Open = appendUnique(idx.Open, inv.ID)
+				}
+				if inv.TxID != "" {
+					idx.Taken[inv.TxID] = inv.ID
+				}
+			}
+			idx.Events = append(idx.Events, old.Events...)
+			_ = saveIdx()
+			_ = os.Rename(legacy, legacy+".migrated")
+		}
+	}
+	return saveIdx()
+}
+
+func invDir() string  { return filepath.Join(root, "invoices") }
+func idxPath() string { return filepath.Join(root, "index.json") }
+func invPath(id string) string {
+	return filepath.Join(invDir(), id+".json")
 }
 
 type NewReq struct {
@@ -165,6 +201,7 @@ func Create(r NewReq) (*Invoice, error) {
 		FeeAsset:     rails.FeeAsset,
 		FeeSompi:     fee,
 		FeeText:      addr.KasText(fee) + " KAS",
+		QuoteID:      id,
 	}
 	if r.Store.EnableKAS {
 		due := rate.FiatToSompi(inv.Amount, inv.Currency, r.Book, uniq)
@@ -183,12 +220,16 @@ func Create(r NewReq) (*Invoice, error) {
 	}
 	mu.Lock()
 	defer mu.Unlock()
-	live.Invoices = append([]Invoice{inv}, live.Invoices...)
-	if len(live.Invoices) > 500 {
-		live.Invoices = live.Invoices[:500]
+	if err := writeInv(inv); err != nil {
+		return nil, err
 	}
+	idx.All = append([]string{inv.ID}, idx.All...)
+	if len(idx.All) > 500 {
+		idx.All = idx.All[:500]
+	}
+	idx.Open = appendUnique(idx.Open, inv.ID)
 	pushEventLocked(inv.ID, "InvoiceCreated", inv.Status, "")
-	if err := saveLocked(); err != nil {
+	if err := saveIdx(); err != nil {
 		return nil, err
 	}
 	cp := inv
@@ -198,34 +239,48 @@ func Create(r NewReq) (*Invoice, error) {
 func Get(id string) (*Invoice, bool) {
 	mu.Lock()
 	defer mu.Unlock()
-	expireLocked()
-	for i := range live.Invoices {
-		if live.Invoices[i].ID == id {
-			cp := live.Invoices[i]
-			return &cp, true
-		}
+	inv, ok := readInv(id)
+	if !ok {
+		return nil, false
 	}
-	return nil, false
+	expireOne(&inv)
+	cp := inv
+	return &cp, true
 }
 
 func List(limit int) []Invoice {
 	mu.Lock()
 	defer mu.Unlock()
-	expireLocked()
-	if limit <= 0 || limit > len(live.Invoices) {
-		limit = len(live.Invoices)
+	ids := idx.All
+	if limit <= 0 || limit > len(ids) {
+		limit = len(ids)
 	}
-	out := make([]Invoice, limit)
-	copy(out, live.Invoices[:limit])
+	out := make([]Invoice, 0, limit)
+	for _, id := range ids {
+		if len(out) >= limit {
+			break
+		}
+		inv, ok := readInv(id)
+		if !ok {
+			continue
+		}
+		expireOne(&inv)
+		out = append(out, inv)
+	}
 	return out
 }
 
 func OpenKAS() []Invoice {
 	mu.Lock()
 	defer mu.Unlock()
-	expireLocked()
 	var out []Invoice
-	for _, inv := range live.Invoices {
+	open := append([]string(nil), idx.Open...)
+	for _, id := range open {
+		inv, ok := readInv(id)
+		if !ok {
+			continue
+		}
+		expireOne(&inv)
 		if inv.Status != New && inv.Status != Processing {
 			continue
 		}
@@ -240,41 +295,48 @@ func OpenKAS() []Invoice {
 func Choose(id, rail string) (*Invoice, error) {
 	mu.Lock()
 	defer mu.Unlock()
-	expireLocked()
-	i := indexLocked(id)
-	if i < 0 {
+	inv, ok := readInv(id)
+	if !ok {
 		return nil, fmt.Errorf("missing")
 	}
-	inv := &live.Invoices[i]
+	expireOne(&inv)
 	if inv.Status != New && inv.Status != Processing {
-		cp := *inv
-		return &cp, nil
+		return &inv, nil
 	}
-	if method(*inv, rail) == nil {
+	if method(inv, rail) == nil {
 		return nil, fmt.Errorf("rail")
 	}
 	inv.Chosen = rail
-	if err := saveLocked(); err != nil {
+	if err := writeInv(inv); err != nil {
 		return nil, err
 	}
-	cp := *inv
-	return &cp, nil
+	return &inv, nil
 }
 
 // Seen records an on-chain KAS payment. conf is acceptances (Kaspa “confirmations”).
+// One txid binds to one quote. That is the local double-spend rule, not a global mutex.
 func Seen(id, txid string, paidSompi uint64, conf int) (*Invoice, error) {
+	return seen(id, txid, paidSompi, conf, "amount")
+}
+
+func SeenPayload(id, txid string, paidSompi uint64, conf int) (*Invoice, error) {
+	return seen(id, txid, paidSompi, conf, "payload")
+}
+
+func seen(id, txid string, paidSompi uint64, conf int, match string) (*Invoice, error) {
 	mu.Lock()
 	defer mu.Unlock()
-	i := indexLocked(id)
-	if i < 0 {
+	inv, ok := readInv(id)
+	if !ok {
 		return nil, fmt.Errorf("missing")
 	}
-	inv := &live.Invoices[i]
 	if inv.Status == Settled || inv.Status == Invalid {
-		cp := *inv
-		return &cp, nil
+		return &inv, nil
 	}
-	m := method(*inv, rails.KAS)
+	if other, used := idx.Taken[txid]; used && other != id {
+		return nil, fmt.Errorf("txid already bound to %s", other)
+	}
+	m := method(inv, rails.KAS)
 	if m == nil {
 		return nil, fmt.Errorf("no kas method")
 	}
@@ -282,6 +344,7 @@ func Seen(id, txid string, paidSompi uint64, conf int) (*Invoice, error) {
 	inv.PaidSompi = paidSompi
 	inv.Confirmations = conf
 	inv.Chosen = rails.KAS
+	inv.Match = match
 	if paidSompi+1 < m.DueSompi { // 1 sompi slack
 		inv.Underpaid = true
 	}
@@ -305,10 +368,19 @@ func Seen(id, txid string, paidSompi uint64, conf int) (*Invoice, error) {
 	if prev != inv.Status {
 		pushEventLocked(inv.ID, "Invoice"+string(inv.Status), inv.Status, txid)
 	}
-	if err := saveLocked(); err != nil {
+	if txid != "" {
+		idx.Taken[txid] = inv.ID
+	}
+	if inv.Status != New && inv.Status != Processing {
+		idx.Open = removeID(idx.Open, inv.ID)
+	}
+	if err := writeInv(inv); err != nil {
 		return nil, err
 	}
-	cp := *inv
+	if err := saveIdx(); err != nil {
+		return nil, err
+	}
+	cp := inv
 	if prev != inv.Status {
 		fire(&cp)
 	}
@@ -319,12 +391,11 @@ func Seen(id, txid string, paidSompi uint64, conf int) (*Invoice, error) {
 func DemoSettle(id, rail string, allowKAS bool) (*Invoice, error) {
 	mu.Lock()
 	defer mu.Unlock()
-	i := indexLocked(id)
-	if i < 0 {
+	inv, ok := readInv(id)
+	if !ok {
 		return nil, fmt.Errorf("missing")
 	}
-	inv := &live.Invoices[i]
-	m := method(*inv, rail)
+	m := method(inv, rail)
 	if m == nil {
 		return nil, fmt.Errorf("rail")
 	}
@@ -336,25 +407,48 @@ func DemoSettle(id, rail string, allowKAS bool) (*Invoice, error) {
 	inv.Status = Settled
 	inv.Confirmations = inv.RequiredConf
 	inv.PaidAt = time.Now().UTC().Format(time.RFC3339)
+	inv.Match = "demo"
 	if rail == rails.KAS {
 		inv.PaidSompi = m.DueSompi
 	} else {
 		inv.PaidMicro = m.DueMicro
 	}
+	idx.Open = removeID(idx.Open, inv.ID)
 	pushEventLocked(inv.ID, "InvoiceSettled", inv.Status, "demo")
-	if err := saveLocked(); err != nil {
+	if err := writeInv(inv); err != nil {
 		return nil, err
 	}
-	cp := *inv
-	fire(&cp)
-	return &cp, nil
+	if err := saveIdx(); err != nil {
+		return nil, err
+	}
+	fire(&inv)
+	return &inv, nil
+}
+
+// SetExpires is for tests.
+func SetExpires(id string, t time.Time) error {
+	mu.Lock()
+	defer mu.Unlock()
+	inv, ok := readInv(id)
+	if !ok {
+		return fmt.Errorf("missing")
+	}
+	inv.Expires = t
+	return writeInv(inv)
+}
+
+func Taken(txid string) (string, bool) {
+	mu.Lock()
+	defer mu.Unlock()
+	id, ok := idx.Taken[txid]
+	return id, ok
 }
 
 func Events(id string) []Event {
 	mu.Lock()
 	defer mu.Unlock()
 	var out []Event
-	for _, e := range live.Events {
+	for _, e := range idx.Events {
 		if id == "" || e.ID == id {
 			out = append(out, e)
 		}
@@ -362,29 +456,19 @@ func Events(id string) []Event {
 	return out
 }
 
-func expireLocked() {
-	now := time.Now().UTC()
-	for i := range live.Invoices {
-		inv := &live.Invoices[i]
-		if inv.Status != New {
-			continue
-		}
-		if now.After(inv.Expires) {
-			inv.Status = Expired
-			pushEventLocked(inv.ID, "InvoiceExpired", inv.Status, "")
-			cp := *inv
-			fire(&cp)
-		}
+func expireOne(inv *Invoice) {
+	if inv.Status != New {
+		return
 	}
-}
-
-func indexLocked(id string) int {
-	for i := range live.Invoices {
-		if live.Invoices[i].ID == id {
-			return i
-		}
+	if time.Now().UTC().After(inv.Expires) {
+		inv.Status = Expired
+		idx.Open = removeID(idx.Open, inv.ID)
+		pushEventLocked(inv.ID, "InvoiceExpired", inv.Status, "")
+		_ = writeInv(*inv)
+		_ = saveIdx()
+		cp := *inv
+		fire(&cp)
 	}
-	return -1
 }
 
 func method(inv Invoice, rail string) *Method {
@@ -417,20 +501,62 @@ func settle(id string, sompi, micro uint64, uri string) Method {
 }
 
 func pushEventLocked(id, typ string, st Status, tx string) {
-	live.Events = append([]Event{{
+	idx.Events = append([]Event{{
 		At: time.Now().UTC(), ID: id, Type: typ, Status: st, TxID: tx,
-	}}, live.Events...)
-	if len(live.Events) > 2000 {
-		live.Events = live.Events[:2000]
+	}}, idx.Events...)
+	if len(idx.Events) > 2000 {
+		idx.Events = idx.Events[:2000]
 	}
 }
 
-func saveLocked() error {
-	raw, err := json.MarshalIndent(live, "", "  ")
+func writeInv(inv Invoice) error {
+	raw, err := json.MarshalIndent(inv, "", "  ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, raw, 0o644)
+	return os.WriteFile(invPath(inv.ID), raw, 0o644)
+}
+
+func readInv(id string) (Invoice, bool) {
+	raw, err := os.ReadFile(invPath(id))
+	if err != nil {
+		return Invoice{}, false
+	}
+	var inv Invoice
+	if json.Unmarshal(raw, &inv) != nil || inv.ID == "" {
+		return Invoice{}, false
+	}
+	if inv.QuoteID == "" {
+		inv.QuoteID = inv.ID
+	}
+	return inv, true
+}
+
+func saveIdx() error {
+	raw, err := json.MarshalIndent(idx, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(idxPath(), raw, 0o644)
+}
+
+func appendUnique(ids []string, id string) []string {
+	for _, x := range ids {
+		if x == id {
+			return ids
+		}
+	}
+	return append(ids, id)
+}
+
+func removeID(ids []string, id string) []string {
+	out := make([]string, 0, len(ids))
+	for _, x := range ids {
+		if x != id {
+			out = append(out, x)
+		}
+	}
+	return out
 }
 
 func hexid(n int) string {
