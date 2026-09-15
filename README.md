@@ -77,4 +77,6 @@ Webhook: POST invoice JSON to the URL you set. Header `X-Ishum-Event`.
 
 Listen: `ISHUM_ADDR` (default `127.0.0.1:8090`). Data: `ISHUM_DATA` (default `./data`).
 
+PoC revisited: [POC-REVISITED.md](POC-REVISITED.md) · [STP-KAS/poc-revisited](https://github.com/STP-KAS/poc-revisited) · till on [sixpack.wtf/till.html](https://sixpack.wtf/till.html)
+
 Explainer (BTCPay 1:33 structure, facts VO): `video/Ishum-sequenced-on-Kaspa.mp4`
