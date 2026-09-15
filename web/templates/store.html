@@ -5,9 +5,9 @@
   <form method="post" action="/store">
     <label>Name <input name="name" value="{{.Store.Name}}" required></label>
     <label>Receive address
-      <input name="payTo" value="{{.Store.PayTo}}" placeholder="kaspa:q…" spellcheck="false" autocomplete="off">
+      <input name="payTo" value="{{.Store.PayTo}}" placeholder="kaspa:q… or kaspatest:q…" spellcheck="false" autocomplete="off">
     </label>
-    <p class="note">Watch-only. Ishum never asks for a seed. Each KAS invoice uses this address plus a unique sompi amount.</p>
+    <p class="note">Watch-only. Ishum never asks for a seed. Each KAS invoice uses this address plus a unique sompi amount. <code>kaspatest:</code> is TN10 and is watched on api-tn10.kaspa.org.</p>
     <label>Currency
       <select name="currency">
         <option value="EUR" {{if eq .Store.Currency "EUR"}}selected{{end}}>EUR</option>

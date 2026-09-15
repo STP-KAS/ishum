@@ -17,6 +17,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"ishum/internal/addr"
 	"ishum/internal/invoice"
 )
 
@@ -53,7 +54,11 @@ func Poll(client *http.Client, virtualDAA uint64) {
 		if err != nil {
 			continue
 		}
-		matchAddress(payTo, invs, txs, virtualDAA)
+		daa := virtualDAA
+		if addr.Testnet(payTo) {
+			daa = tipAt(client, addr.IndexerBase(payTo))
+		}
+		matchAddress(payTo, invs, txs, daa)
 	}
 }
 
@@ -125,7 +130,11 @@ func Loop(stop <-chan struct{}) {
 }
 
 func tip(client *http.Client) uint64 {
-	resp, err := client.Get("https://api.kaspa.org/info/virtual-chain-blue-score")
+	return tipAt(client, "https://api.kaspa.org")
+}
+
+func tipAt(client *http.Client, base string) uint64 {
+	resp, err := client.Get(base + "/info/virtual-chain-blue-score")
 	if err != nil {
 		return 0
 	}
@@ -141,7 +150,7 @@ func tip(client *http.Client) uint64 {
 }
 
 func addressTxs(client *http.Client, payTo string) ([]tx, error) {
-	u := "https://api.kaspa.org/addresses/" + url.PathEscape(payTo) + "/full-transactions?limit=20&resolve_previous_outpoints=no"
+	u := addr.IndexerBase(payTo) + "/addresses/" + url.PathEscape(payTo) + "/full-transactions?limit=20&resolve_previous_outpoints=no"
 	resp, err := client.Get(u)
 	if err != nil {
 		return nil, err

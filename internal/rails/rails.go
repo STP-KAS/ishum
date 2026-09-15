@@ -44,7 +44,7 @@ var All = []Info{
 	{
 		ID: KUSD, Name: "Kaspa stable", Unit: "kUSD", Decimals: 6,
 		Live: false, Kind: KindReserved, Badge: "reserved · needs capital",
-		Note: "Native-stable slot if one is issued on Kaspa. Overcollateral or reserves. Not Tether. No free dollar. Not live.",
+		Note: "Native-stable slot. BitCoffee KUSD is a TN10 covenant protocol (KAS-backed, oracle-free). This till still cannot move that Asset ID. Not Tether. No free dollar.",
 	},
 	{
 		ID: USDT, Name: "USDT (guest)", Unit: "USDT", Decimals: 6,
