@@ -228,7 +228,7 @@ func (s *Server) store(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if st.PayTo != "" && !addr.Valid(st.PayTo) {
-			s.view(w, r, "store.html", page{Title: "Store", Active: "store", Error: "pay-to must be a mainnet kaspa: address", Items: storecfg.Items()})
+			s.view(w, r, "store.html", page{Title: "Store", Active: "store", Error: "pay-to must be a kaspa: or kaspatest: address", Items: storecfg.Items()})
 			return
 		}
 		if err := storecfg.Save(st, nil); err != nil {

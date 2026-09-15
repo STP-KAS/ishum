@@ -11,7 +11,7 @@
     </div>
   </div>
   {{if .Error}}<p class="err">{{.Error}}</p>{{end}}
-  {{if not .Store.PayTo}}<p class="warn">Set a <a href="/store">kaspa: receive address</a> before taking KAS. Stables can still be demonstrated.</p>{{end}}
+  {{if not .Store.PayTo}}<p class="warn">Set a <a href="/store">kaspa: or kaspatest: receive address</a> before taking KAS. Stables can still be demonstrated.</p>{{end}}
 
   <div class="modes">
     <button type="button" class="on" data-mode="keypad" id="mode-keypad">Keypad</button>

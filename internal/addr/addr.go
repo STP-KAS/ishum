@@ -9,13 +9,40 @@ import (
 
 const charset = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 
-// Valid reports whether s is a mainnet kaspa: bech32 address.
+// Prefix returns the URI scheme for a Kaspa address, including the colon.
+func Prefix(s string) string {
+	s = strings.TrimSpace(s)
+	switch {
+	case strings.HasPrefix(s, "kaspatest:"):
+		return "kaspatest:"
+	case strings.HasPrefix(s, "kaspa:"):
+		return "kaspa:"
+	default:
+		return ""
+	}
+}
+
+// Testnet reports TN10 (kaspatest:) addresses.
+func Testnet(s string) bool {
+	return Prefix(s) == "kaspatest:"
+}
+
+// IndexerBase is the public REST host that can see this address.
+func IndexerBase(s string) string {
+	if Testnet(s) {
+		return "https://api-tn10.kaspa.org"
+	}
+	return "https://api.kaspa.org"
+}
+
+// Valid reports whether s is a kaspa: or kaspatest: bech32 address.
 func Valid(s string) bool {
 	s = strings.TrimSpace(s)
-	if !strings.HasPrefix(s, "kaspa:") {
+	p := Prefix(s)
+	if p == "" {
 		return false
 	}
-	body := s[len("kaspa:"):]
+	body := s[len(p):]
 	if len(body) < 50 || len(body) > 80 {
 		return false
 	}
@@ -28,7 +55,7 @@ func Valid(s string) bool {
 }
 
 // URI is kaspa:<addr>?amount=<kas>&message=<invoice-id>
-// Spec: rusty-kaspa issue #127 (BIP-21 analogue).
+// Spec: rusty-kaspa issue #127 (BIP-21 analogue). kaspatest: is the TN10 form.
 func URI(payTo string, sompi uint64, message string) string {
 	payTo = strings.TrimSpace(payTo)
 	if !Valid(payTo) {

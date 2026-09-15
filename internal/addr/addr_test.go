@@ -14,8 +14,16 @@ func TestURI(t *testing.T) {
 	if Valid("kaspa:nope") {
 		t.Fatal("short")
 	}
-	if Valid("kaspatest:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqkx9awp4e") {
-		t.Fatal("testnet refused")
+	tn := "kaspatest:qzffl5xy9np46gkttyuftqnv2w04pr8g3wsp7c3vv8se3txtelx6q7c0v0ldx"
+	if !Valid(tn) {
+		t.Fatal("tn10 valid")
+	}
+	if !Testnet(tn) || IndexerBase(tn) != "https://api-tn10.kaspa.org" {
+		t.Fatal("tn10 indexer")
+	}
+	u2 := URI(tn, 100000000, "iabc")
+	if u2 != tn+"?amount=1&message=iabc" {
+		t.Fatal(u2)
 	}
 }
 
