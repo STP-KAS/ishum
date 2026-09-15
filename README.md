@@ -11,7 +11,7 @@ Four layers, not one coin:
 | Consensus / order | Kaspa L1. USDT does not vote in GHOSTDAG. |
 | Miner fee | Always KAS. Sender pays. Not Tether-as-gas. |
 | Unit of account | EUR or USD on the keypad. |
-| Settlement | KAS (native, live) · kUSD (reserved, needs capital) · USDT (guest IOU, freeze) |
+| Settlement | KAS (native, live) · kUSD (reserved; BitCoffee protocol exists on TN10, this till cannot yet transfer the Asset ID) · USDT (guest IOU, freeze) |
 
 USDT in does not un-decentralize Kaspa. It imports a king into the money people use. The till labels that. If USDT were the fee asset, miners would sit under a freeze-capable issuer. Refused.
 
@@ -31,7 +31,7 @@ go build -o ishum.exe ./cmd/ishum
 
 http://127.0.0.1:8090/pos
 
-Set the receive address under `/store`. Without it, KAS invoices cannot be paid; the two stable rails still demonstrate checkout.
+Set the receive address under `/store`. `kaspa:` (mainnet) and `kaspatest:` (TN10) are valid. Without it, KAS invoices cannot be paid; the two stable rails still demonstrate checkout. TN10 addresses are watched on `api-tn10.kaspa.org`.
 
 ## Why not a BTCPay plugin
 
@@ -41,8 +41,8 @@ BTCPay is the right *shape*. A Kaspa *plugin* is the documented altcoin path (C#
 
 | ID | Kind | Live | What it is |
 | --- | --- | --- | --- |
-| `kas` | native | yes | No issuer. Watch `api.kaspa.org`. Paste txid as fallback. |
-| `kusd` | reserved-native | no | A Kaspa dollar if someone posts reserves/collateral. Not Tether. No free dollar. |
+| `kas` | native | yes | No issuer. Watch `api.kaspa.org` or `api-tn10.kaspa.org` for `kaspatest:`. Paste txid as fallback. |
+| `kusd` | reserved-native | no | BitCoffee KUSD is a TN10 covenant protocol. This till still cannot move that Asset ID. Not Tether. No free dollar. |
 | `usdt` | guest-iou | no | Tether prints, burns, freezes. Chain is still P2P. The unit is Tether policy. Not gas. |
 
 KAS rate: `https://api.kaspa.org/info/price`. EUR: Frankfurter/ECB. Merchant can override KAS/USD on `/store`.
