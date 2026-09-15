@@ -243,7 +243,8 @@ func Claim(client *http.Client, id, txid string) (*invoice.Invoice, error) {
 	if len(txid) != 64 {
 		return nil, fmt.Errorf("txid")
 	}
-	u := "https://api.kaspa.org/transactions/" + url.PathEscape(txid)
+	base := addr.IndexerBase(inv.PayTo)
+	u := base + "/transactions/" + url.PathEscape(txid)
 	resp, err := client.Get(u)
 	if err != nil {
 		return nil, err
@@ -264,10 +265,9 @@ func Claim(client *http.Client, id, txid string) (*invoice.Invoice, error) {
 	if qid := QuoteFromPayload(t.Payload); qid != "" && qid != inv.ID && qid != inv.QuoteID {
 		return nil, fmt.Errorf("txid payload is quote %s", qid)
 	}
-	match := "claim"
+	daa := tipAt(client, base)
 	if QuoteFromPayload(t.Payload) != "" {
-		return invoice.SeenPayload(inv.ID, t.TransactionID, paid, confirmations(t, tip(client)))
+		return invoice.SeenPayload(inv.ID, t.TransactionID, paid, confirmations(t, daa))
 	}
-	_ = match
-	return invoice.Seen(inv.ID, t.TransactionID, paid, confirmations(t, tip(client)))
+	return invoice.Seen(inv.ID, t.TransactionID, paid, confirmations(t, daa))
 }
