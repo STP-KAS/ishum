@@ -84,3 +84,12 @@ Listen: `ISHUM_ADDR` (default `127.0.0.1:8090`). Data: `ISHUM_DATA` (default `./
 PoC revisited: [POC-REVISITED.md](POC-REVISITED.md) · [STP-KAS/poc-revisited](https://github.com/STP-KAS/poc-revisited) · till on [sixpack.wtf/till.html](https://sixpack.wtf/till.html)
 
 Explainer (BTCPay 1:33 structure, facts VO): `video/Ishum-sequenced-on-Kaspa.mp4`
+
+---
+
+> **Standard disclaimer.** This GitHub, not the topic above.
+>
+> Intentions are good; thought process is questionable. STP remains delusional. Si vis pacem, para bellum.
+>
+> Intern at https://sixpack.wtf/  
+> X: https://x.com/StppStp · GitHub: https://github.com/STP-KAS
