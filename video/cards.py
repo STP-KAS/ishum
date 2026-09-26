@@ -1,7 +1,8 @@
 """Title cards with exact text. Paper/ink of the Ishum till."""
+from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
-OUT = r"C:\Users\<user>\Documents\kaspa\ishum\video"
+OUT = str(Path.home() / "Documents" / "kaspa" / "ishum" / "video")
 W, H = 1920, 1080
 PAPER = (244, 239, 228)
 INK = (20, 28, 24)

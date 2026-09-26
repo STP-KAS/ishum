@@ -2,9 +2,9 @@
 import subprocess
 from pathlib import Path
 
-FF = r"C:\Users\<user>\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.1-full_build\bin\ffmpeg.exe"
-HERE = Path(r"C:\Users\<user>\Documents\kaspa\ishum\video")
-VID = Path(r"C:\Users\<user>\.grok\sessions\C%3A%5CUsers%5C<user>\01a090a6-b569-7cc3-a35b-b6fb4c556a70\videos")
+FF = str(Path.home()) + r"\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.1-full_build\bin\ffmpeg.exe"
+HERE = Path.home() / "Documents" / "kaspa" / "ishum" / "video"
+VID = Path.home() / ".grok" / "sessions" / ("C%3A%5CUsers%5C" + Path.home().name) / "01a090a6-b569-7cc3-a35b-b6fb4c556a70" / "videos"
 CLIPS = HERE / "clips"
 CLIPS.mkdir(exist_ok=True)
 
